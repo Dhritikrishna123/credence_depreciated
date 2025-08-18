@@ -36,3 +36,7 @@ def balance_cache_key(user_id: str, domain: str | None) -> str:
 	return f"balance:{user_id}:{domain or '_all'}"
 
 
+def trust_cache_key(user_id: str, domain: str | None = None) -> str:
+	return f"trust:{user_id}:{domain or '_all'}"
+
+
