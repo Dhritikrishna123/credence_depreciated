@@ -64,8 +64,20 @@ class Settings(BaseSettings):
 			file_settings = _load_yaml(path)
 			if file_settings:
 				_validate_config_schema(file_settings)
-				# Merge with precedence: environment (base) overrides YAML
-				merged: Dict[str, Any] = {**file_settings, **{k: v for k, v in base.model_dump().items() if v is not None}}
+				# Merge with precedence: environment (base) overrides YAML for connection strings and scalars
+				merged: Dict[str, Any] = base.model_dump()
+				# Always take YAML domains/plugins if provided (they are intended to be file-driven)
+				if isinstance(file_settings, dict):
+					if "domains" in file_settings:
+						merged["domains"] = file_settings["domains"]
+					if "plugins" in file_settings:
+						merged["plugins"] = file_settings["plugins"]
+					# For any other keys, only fill in if not already set from env
+					for k, v in file_settings.items():
+						if k in ("domains", "plugins"):
+							continue
+						if merged.get(k) in (None, ""):
+							merged[k] = v
 				return cls(**merged)
 		return base
 
