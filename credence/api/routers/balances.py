@@ -13,6 +13,17 @@ router = APIRouter(prefix="/balances", tags=["balances"])
 
 @router.get("/{user_id}", response_model=BalanceResponse)
 def get_balance(user_id: str, domain: str | None = None, session: Session = Depends(get_session_dep)) -> BalanceResponse:
+	"""Get a user's karma balance, optionally scoped to a domain.
+
+	Uses Redis cache with a short TTL; invalidated when new entries are added.
+
+	Args:
+		user_id: Subject user id.
+		domain: Optional domain.
+
+	Returns:
+		BalanceResponse with the current balance.
+	"""
 	settings = get_settings()
 	cache = RedisCache.from_settings(settings)
 	ck = balance_cache_key(user_id, domain)

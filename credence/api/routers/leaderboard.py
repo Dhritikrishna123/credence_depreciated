@@ -22,6 +22,16 @@ def leaderboard(
 	mode: str | None = None,
 	session: Session = Depends(get_session_dep),
 ):
+	"""Return leaderboard items.
+
+	Args:
+		domain: Optional domain filter.
+		since_days: Restrict to points gained within the last N days.
+		mode: Ranking mode: None (sum of points), 'trust_weighted', or 'recency_weighted'.
+
+	Returns:
+		LeaderboardResponse containing ranked items.
+	"""
 	settings = get_settings()
 	strategy_cls = load_symbol(settings.plugins.leaderboard_strategy)
 	strategy = strategy_cls()  # type: ignore[call-arg]

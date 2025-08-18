@@ -13,6 +13,11 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 
 @router.get("/")
 def get_stats(session: Session = Depends(get_session_dep)):
+	"""Basic service statistics for dashboards.
+
+	Returns counts of users, verified users, open disputes, total entries,
+	and aggregate positive/negative karma sums.
+	"""
 	users = session.query(func.count(func.distinct(LedgerEntry.user_id))).scalar() or 0
 	disputes_open = session.query(func.count(Dispute.id)).filter(Dispute.status == 'open').scalar() or 0
 	total_entries = session.query(func.count(LedgerEntry.id)).scalar() or 0

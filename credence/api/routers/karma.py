@@ -19,6 +19,20 @@ def award(
 	auth: AuthAdapter = Depends(get_auth_adapter),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
+	"""Award karma points to the authenticated user.
+
+	Args:
+		req: Payload containing `domain`, `action`, optional `evidence_ref` and `meta`.
+		session: Database session (injected).
+		auth: Auth adapter to resolve current user id.
+		idempotency_key: Optional header `Idempotency-Key` to safely retry requests.
+
+	Returns:
+		The created ledger entry.
+
+	Raises:
+		HTTPException: on validation errors, permission errors, or limits exceeded.
+	"""
 	try:
 		service = KarmaService(session=session, settings=get_settings())
 		entry = service.award(
@@ -41,6 +55,14 @@ def reverse(
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
 ):
+	"""Append a reversing entry for an existing ledger entry belonging to the caller.
+
+	Args:
+		req: Body with `entry_id` of the original ledger entry.
+
+	Returns:
+		The reversal ledger entry.
+	"""
 	try:
 		service = KarmaService(session=session, settings=get_settings())
 		entry = service.reverse(user_id=auth.get_user_id(), original_entry_id=req.entry_id)
@@ -55,6 +77,14 @@ def flag(
 	req: FlagEvidenceRequest,
 	session: Session = Depends(get_session_dep),
 ):
+	"""Record an append-only evidence flag (yellow/red) for a ledger entry.
+
+	Args:
+		req: Body with `entry_id` and `status` (yellow|red).
+
+	Returns:
+		A record describing the evidence flag event.
+	"""
 	try:
 		service = KarmaService(session=session, settings=get_settings())
 		flag = service.flag_evidence(entry_id=req.entry_id, status=req.status)

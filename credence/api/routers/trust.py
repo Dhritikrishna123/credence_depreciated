@@ -14,6 +14,18 @@ router = APIRouter(prefix="/trust", tags=["trust"])
 
 @router.get("/{user_id}", response_model=TrustResponse)
 def get_trust(user_id: str, domain: str | None = None, session: Session = Depends(get_session_dep)) -> TrustResponse:
+	"""Get the user's trust score, balance, and verification level.
+
+	Tries Redis cache first; on cache miss, computes via plugin formula,
+	caches the result briefly, and enqueues background persistence.
+
+	Args:
+		user_id: Subject user id.
+		domain: Optional domain to scope trust (defaults to all).
+
+	Returns:
+		TrustResponse with trust, karma_balance, and verification_level.
+	"""
 	settings = get_settings()
 	cache = RedisCache.from_settings(settings)
 	ck = trust_cache_key(user_id, domain)

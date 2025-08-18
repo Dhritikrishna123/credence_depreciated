@@ -19,6 +19,14 @@ def list_ledger(
 	page_size: int = 50,
 	session: Session = Depends(get_session_dep),
 ):
+	"""Paginated ledger history for a user, newest first.
+
+	Args:
+		user_id: Subject user id.
+		domain: Optional domain filter.
+		page: 1-based page index.
+		page_size: Items per page (max 200).
+	"""
 	page = max(1, page)
 	page_size = min(max(1, page_size), 200)
 	q = session.query(LedgerEntry).filter(LedgerEntry.user_id == user_id)
@@ -48,6 +56,13 @@ def export_ledger(
 	format: str = "json",
 	session: Session = Depends(get_session_dep),
 ):
+	"""Export ledger data as JSON or CSV.
+
+	Args:
+		user_id: Optional user filter.
+		domain: Optional domain filter.
+		format: 'json' or 'csv'.
+	"""
 	q = session.query(LedgerEntry)
 	if user_id is not None:
 		q = q.filter(LedgerEntry.user_id == user_id)
