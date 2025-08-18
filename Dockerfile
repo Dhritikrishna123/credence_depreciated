@@ -11,12 +11,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install project deps
+# Copy sources early to ensure packaging has code context
 COPY pyproject.toml README.md /app/
+COPY credence /app/credence
+
+# Install project deps
 RUN pip install --upgrade pip && pip install .
 
-# Copy source and runtime assets (alembic, config example, entrypoint)
-COPY credence /app/credence
+# Copy runtime assets (alembic, config example, entrypoint)
 COPY alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 COPY config/config.example.yaml /app/config/config.yaml
