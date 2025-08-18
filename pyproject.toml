@@ -54,6 +54,7 @@ dependencies = [
     "alembic>=1.13.1",
     "redis>=5.0.4",
     "celery>=5.3.6",
+    "prometheus-fastapi-instrumentator>=6.1.0",
 ]
 
 
