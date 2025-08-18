@@ -15,6 +15,7 @@ def award(
 	req: AwardRequest,
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
+    idempotency_key: str | None = None,
 ):
 	try:
 		service = KarmaService(session=session, settings=get_settings())
@@ -23,6 +24,7 @@ def award(
 			domain=req.domain,
 			action=req.action,
 			evidence_ref=req.evidence_ref,
+			idempotency_key=idempotency_key,
 		)
 		return entry
 	except (ValueError, PermissionError) as e:
