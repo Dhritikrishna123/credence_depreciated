@@ -6,11 +6,13 @@ from sqlalchemy.orm import Session
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep
 from ...schemas import DisputeOpenRequest, DisputeOut, DisputeResolveRequest
 from ...services.disputes import DisputeService
+from ...rate_limit import limiter
 
 router = APIRouter(prefix="/disputes", tags=["disputes"])
 
 
 @router.post("/open", response_model=DisputeOut)
+@limiter.limit("30/minute")
 def open_dispute(
 	req: DisputeOpenRequest,
 	session: Session = Depends(get_session_dep),
@@ -25,6 +27,7 @@ def open_dispute(
 
 
 @router.post("/resolve", response_model=DisputeOut)
+@limiter.limit("30/minute")
 def resolve_dispute(
 	req: DisputeResolveRequest,
 	session: Session = Depends(get_session_dep),

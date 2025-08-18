@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from fastapi import Depends, FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from ..rate_limit import limiter
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import PlainTextResponse
 
@@ -42,7 +41,6 @@ def make_app() -> FastAPI:
 	Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 	# Rate limiter
-	limiter = Limiter(key_func=get_remote_address, default_limits=[Settings().rate_limit_default])
 	app.state.limiter = limiter
 
 	@app.exception_handler(RateLimitExceeded)

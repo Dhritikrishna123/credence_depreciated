@@ -6,11 +6,13 @@ from sqlalchemy.orm import Session
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep, get_settings
 from ...schemas import AwardRequest, FlagEvidenceRequest, LedgerEntryOut, ReverseRequest
 from ...services.karma import KarmaService
+from ...rate_limit import limiter
 
 router = APIRouter(prefix="/karma", tags=["karma"])
 
 
 @router.post("/award", response_model=LedgerEntryOut)
+@limiter.limit("120/minute")
 def award(
 	req: AwardRequest,
 	session: Session = Depends(get_session_dep),
@@ -32,6 +34,7 @@ def award(
 
 
 @router.post("/reverse", response_model=LedgerEntryOut)
+@limiter.limit("60/minute")
 def reverse(
 	req: ReverseRequest,
 	session: Session = Depends(get_session_dep),
@@ -46,6 +49,7 @@ def reverse(
 
 
 @router.post("/flag", response_model=LedgerEntryOut)
+@limiter.limit("60/minute")
 def flag(
 	req: FlagEvidenceRequest,
 	session: Session = Depends(get_session_dep),
