@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any, Dict
 
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,7 @@ class AwardRequest(BaseModel):
 	domain: str
 	action: str
 	evidence_ref: Optional[str] = None
+	meta: Optional[Dict[str, Any]] = None
 
 
 class LedgerEntryOut(BaseModel):
@@ -21,6 +22,7 @@ class LedgerEntryOut(BaseModel):
 	evidence_ref: Optional[str]
 	evidence_status: str
 	related_entry_id: Optional[int]
+	meta: Optional[Dict[str, Any]]
 	created_at: datetime
 
 	class Config:
@@ -40,6 +42,13 @@ class ReverseRequest(BaseModel):
 class FlagEvidenceRequest(BaseModel):
 	entry_id: int
 	status: str = Field(..., pattern="^(yellow|red)$")
+
+
+class FlagEvidenceResponse(BaseModel):
+	id: int
+	ledger_entry_id: int
+	status: str
+	created_at: datetime
 
 
 class VerificationSetRequest(BaseModel):
@@ -64,6 +73,15 @@ class LeaderboardResponse(BaseModel):
 	domain: Optional[str] = None
 	since_days: Optional[int] = None
 	items: list[LeaderboardItem]
+
+
+class LedgerPageResponse(BaseModel):
+	user_id: Optional[str] = None
+	domain: Optional[str] = None
+	page: int
+	page_size: int
+	total: int
+	items: list[LedgerEntryOut]
 
 
 class DisputeOpenRequest(BaseModel):

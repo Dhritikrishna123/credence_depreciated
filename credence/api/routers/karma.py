@@ -27,6 +27,7 @@ def award(
 			action=req.action,
 			evidence_ref=req.evidence_ref,
 			idempotency_key=idempotency_key,
+			meta=req.meta,
 		)
 		return entry
 	except (ValueError, PermissionError) as e:

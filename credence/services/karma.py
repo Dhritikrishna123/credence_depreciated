@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Any, Dict
 
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from ..config import DomainActionConfig, Settings
-from ..db import EvidenceStatusEnum, IdempotencyKey, LedgerEntry
+from ..db import EvidenceStatusEnum, IdempotencyKey, LedgerEntry, EvidenceFlag
 from ..plugins import load_symbol
 from ..cache import RedisCache, balance_cache_key
 from ..worker import recompute_trust_task
@@ -25,7 +25,7 @@ class KarmaService:
 		except KeyError:
 			raise ValueError(f"Unknown domain/action: {domain}/{action}")
 
-	def award(self, user_id: str, domain: str, action: str, evidence_ref: Optional[str], idempotency_key: Optional[str] = None) -> LedgerEntry:
+	def award(self, user_id: str, domain: str, action: str, evidence_ref: Optional[str], idempotency_key: Optional[str] = None, meta: Optional[Dict[str, Any]] = None) -> LedgerEntry:
 		cfg = self._get_action_config(domain, action)
 		if cfg.requires_evidence and not evidence_ref:
 			raise ValueError("Evidence is required for this action")
@@ -69,6 +69,7 @@ class KarmaService:
 			points=cfg.points,
 			evidence_ref=evidence_ref,
 			evidence_status=evidence_status,
+			meta=meta,
 		)
 		self.session.add(entry)
 		self.session.commit()
@@ -124,6 +125,9 @@ class KarmaService:
 		entry = self.session.get(LedgerEntry, entry_id)
 		if entry is None:
 			raise ValueError("Entry not found")
+		# Append-only flag record and mirror on entry for convenience
+		flag = EvidenceFlag(ledger_entry_id=entry.id, status=status)
+		self.session.add(flag)
 		entry.evidence_status = status
 		self.session.commit()
 		self.session.refresh(entry)

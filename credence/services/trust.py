@@ -17,12 +17,20 @@ class TrustService:
 	settings: Settings
 
 	def get_verification_level(self, user_id: str) -> int:
-		levels = (
+		# Compute external vs internal maxima then combine via provider
+		external_level = int(
 			self.session.query(func.coalesce(func.max(Verification.level), 0))
-			.filter(Verification.user_id == user_id)
+			.filter(Verification.user_id == user_id, Verification.source == "external")
 			.scalar_one()
 		)
-		return int(levels)
+		internal_level = int(
+			self.session.query(func.coalesce(func.max(Verification.level), 0))
+			.filter(Verification.user_id == user_id, Verification.source == "internal")
+			.scalar_one()
+		)
+		provider_cls = load_symbol(self.settings.plugins.verification_provider)
+		provider = provider_cls()  # type: ignore[call-arg]
+		return int(provider.effective_level(external_level, internal_level))
 
 	def compute_trust(self, user_id: str, domain: Optional[str] = None) -> tuple[float, int, int]:
 		# balance

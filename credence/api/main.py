@@ -14,6 +14,8 @@ from .routers import leaderboard as leaderboard_router
 from .routers import verification as verification_router
 from .routers import balances as balances_router
 from .routers import disputes as disputes_router
+from .routers import ledger as ledger_router
+from .routers import stats as stats_router
 
 
 def get_settings() -> Settings:
@@ -54,6 +56,8 @@ def make_app() -> FastAPI:
 	app.include_router(verification_router.router, prefix="/v1")
 	app.include_router(balances_router.router, prefix="/v1")
 	app.include_router(disputes_router.router, prefix="/v1")
+	app.include_router(ledger_router.router, prefix="/v1")
+	app.include_router(stats_router.router, prefix="/v1")
 
 	return app
 
