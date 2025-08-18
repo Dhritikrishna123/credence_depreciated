@@ -1,0 +1,28 @@
+app_name: credence
+database_url: postgresql+psycopg://credence:credence@localhost:5432/credence
+
+plugins:
+  trust_formula: credence.plugins.trust.formulas.default:DefaultTrustFormula
+  evidence_validator: credence.plugins.evidence_plugins.default:DefaultEvidenceValidator
+  verification_provider: credence.plugins.verification_plugins.default:DefaultVerificationProvider
+  decay_policy: credence.plugins.decay_plugins.default:NoDecayPolicy
+  leaderboard_strategy: credence.plugins.leaderboard_plugins.default:DefaultLeaderboardStrategy
+  auth_provider: credence.auth_providers.no_auth:NoAuthProvider
+
+domains:
+  posts:
+    upvote:
+      points: 1
+      max_per_day: 500
+      requires_evidence: false
+    downvote:
+      points: -1
+      max_per_day: 200
+      requires_evidence: false
+  curation:
+    feature:
+      points: 10
+      max_per_day: 20
+      requires_evidence: true
+
+
