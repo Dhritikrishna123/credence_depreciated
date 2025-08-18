@@ -15,11 +15,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md /app/
 RUN pip install --upgrade pip && pip install .
 
-# Copy source
+# Copy source and runtime assets (alembic, config example, entrypoint)
 COPY credence /app/credence
+COPY alembic /app/alembic
+COPY alembic.ini /app/alembic.ini
+COPY config/config.example.yaml /app/config/config.yaml
+COPY docker/entrypoint.py /app/entrypoint.py
 
 EXPOSE 8000
 
-CMD ["uvicorn", "credence.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default to API; compose can override to "worker"
+CMD ["python", "/app/entrypoint.py", "api"]
 
 

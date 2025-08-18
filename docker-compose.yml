@@ -30,32 +30,36 @@ volumes:
       timeout: 5s
       retries: 5
 
-  worker:
-    build: .
-    container_name: credence-worker
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      CREDENCE_CONFIG: /app/config/config.yaml
-      CREDENCE_DATABASE_URL: postgresql+psycopg://credence:credence@postgres:5432/credence
-      CREDENCE_REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    command: ["celery", "-A", "credence.worker:celery_app", "worker", "--loglevel=info"]
-
   api:
     build: .
     container_name: credence-api
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       CREDENCE_CONFIG: /app/config/config.yaml
       CREDENCE_DATABASE_URL: postgresql+psycopg://credence:credence@postgres:5432/credence
       CREDENCE_REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
-    command: ["uvicorn", "credence.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["python", "/app/entrypoint.py", "api"]
+
+  worker:
+    build: .
+    container_name: credence-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      CREDENCE_CONFIG: /app/config/config.yaml
+      CREDENCE_DATABASE_URL: postgresql+psycopg://credence:credence@postgres:5432/credence
+      CREDENCE_REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    command: ["python", "/app/entrypoint.py", "worker"]
 
 
