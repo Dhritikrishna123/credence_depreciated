@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from typing import Generator, Optional
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, create_engine, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, JSON, Float, create_engine, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 from .config import Settings
@@ -33,6 +33,8 @@ class LedgerEntry(Base):
 		Enum(EvidenceStatusEnum, name="evidence_status"), default=EvidenceStatusEnum.GREEN
 	)
 	related_entry_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("ledger_entries.id"), nullable=True)
+	# Optional metadata (geo, context, client info)
+	meta: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
 
 	related_entry: Mapped[Optional["LedgerEntry"]] = relationship(remote_side=[id])
@@ -80,6 +82,27 @@ class IdempotencyKey(Base):
 	action: Mapped[str] = mapped_column(String(64))
 	ledger_entry_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("ledger_entries.id"), nullable=True)
 	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class TrustScore(Base):
+	__tablename__ = "trust_scores"
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	user_id: Mapped[str] = mapped_column(String(128), index=True)
+	domain: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+	trust: Mapped[float] = mapped_column(Float)
+	karma_balance: Mapped[int] = mapped_column(Integer)
+	verification_level: Mapped[int] = mapped_column(Integer)
+	computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+
+class EvidenceFlag(Base):
+	__tablename__ = "evidence_flags"
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	ledger_entry_id: Mapped[int] = mapped_column(Integer, ForeignKey("ledger_entries.id"))
+	status: Mapped[EvidenceStatusEnum] = mapped_column(Enum(EvidenceStatusEnum, name="evidence_status"))
+	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
 
 
 def create_session_factory(settings: Settings) -> sessionmaker[Session]:
