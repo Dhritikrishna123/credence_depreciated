@@ -42,6 +42,10 @@ class Settings(BaseSettings):
 	database_url: str = Field(default_factory=lambda: "postgresql+psycopg://credence:credence@localhost:5432/credence")
 	config_path: Optional[str] = None
 	redis_url: str = Field(default_factory=lambda: "redis://localhost:6379/0")
+	# JWT config (for JwtAuthProvider)
+	jwks_url: Optional[str] = None
+	jwt_issuer: Optional[str] = None
+	jwt_audience: Optional[str] = None
 	plugins: PluginConfig = Field(default_factory=PluginConfig)
 	# domain -> action -> config
 	domains: Dict[str, Dict[str, DomainActionConfig]] = Field(default_factory=dict)
