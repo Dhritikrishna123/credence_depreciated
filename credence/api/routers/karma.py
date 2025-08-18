@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep, get_settings
-from ...schemas import AwardRequest, FlagEvidenceRequest, LedgerEntryOut, ReverseRequest
+from ...schemas import AwardRequest, FlagEvidenceRequest, LedgerEntryOut, ReverseRequest, FlagEvidenceResponse
 from ...services.karma import KarmaService
 from ...rate_limit import limiter
 
@@ -49,7 +49,7 @@ def reverse(
 		raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/flag", response_model=LedgerEntryOut)
+@router.post("/flag", response_model=FlagEvidenceResponse)
 @limiter.limit("60/minute")
 def flag(
 	req: FlagEvidenceRequest,
@@ -57,8 +57,8 @@ def flag(
 ):
 	try:
 		service = KarmaService(session=session, settings=get_settings())
-		entry = service.flag_evidence(entry_id=req.entry_id, status=req.status)
-		return entry
+		flag = service.flag_evidence(entry_id=req.entry_id, status=req.status)
+		return FlagEvidenceResponse(id=flag.id, ledger_entry_id=flag.ledger_entry_id, status=flag.status, created_at=flag.created_at)
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
 

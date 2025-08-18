@@ -119,18 +119,17 @@ class KarmaService:
 		self.session.refresh(reversal)
 		return reversal
 
-	def flag_evidence(self, entry_id: int, status: str) -> LedgerEntry:
+	def flag_evidence(self, entry_id: int, status: str) -> EvidenceFlag:
 		if status not in {EvidenceStatusEnum.YELLOW, EvidenceStatusEnum.RED}:
 			raise ValueError("Invalid flag status")
 		entry = self.session.get(LedgerEntry, entry_id)
 		if entry is None:
 			raise ValueError("Entry not found")
-		# Append-only flag record and mirror on entry for convenience
+		# Append-only flag record (do not update ledger_entries to keep append-only contract)
 		flag = EvidenceFlag(ledger_entry_id=entry.id, status=status)
 		self.session.add(flag)
-		entry.evidence_status = status
 		self.session.commit()
-		self.session.refresh(entry)
-		return entry
+		self.session.refresh(flag)
+		return flag
 
 
