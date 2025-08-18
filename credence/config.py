@@ -64,7 +64,9 @@ class Settings(BaseSettings):
 			file_settings = _load_yaml(path)
 			if file_settings:
 				_validate_config_schema(file_settings)
-				return cls(**file_settings)
+				# Merge with precedence: environment (base) overrides YAML
+				merged: Dict[str, Any] = {**file_settings, **{k: v for k, v in base.model_dump().items() if v is not None}}
+				return cls(**merged)
 		return base
 
 
