@@ -9,6 +9,11 @@ plugins:
   leaderboard_strategy: credence.plugins.leaderboard_plugins.default:DefaultLeaderboardStrategy
   auth_provider: credence.auth_providers.no_auth:NoAuthProvider
 
+# JWT (for JwtAuthProvider)
+jwks_url: https://example.com/.well-known/jwks.json
+jwt_issuer: https://example.com/
+jwt_audience: api://default
+
 domains:
   posts:
     upvote:
