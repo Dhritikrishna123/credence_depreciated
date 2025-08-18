@@ -55,12 +55,13 @@ def main() -> int:
 	wait_for(pg_host, pg_port, timeout=120)
 	wait_for("redis", 6379, timeout=60)
 
-	# Run migrations
-	print("[entrypoint] Running Alembic migrations...", flush=True)
-	ret = run(["alembic", "upgrade", "head"])
-	if ret != 0:
-		print("[entrypoint] Alembic failed", file=sys.stderr)
-		return ret
+	# Run migrations only in API to avoid concurrency on version table
+	if mode == "api":
+		print("[entrypoint] Running Alembic migrations...", flush=True)
+		ret = run(["alembic", "upgrade", "head"])
+		if ret != 0:
+			print("[entrypoint] Alembic failed", file=sys.stderr)
+			return ret
 
 	if mode == "api":
 		return run(["uvicorn", "credence.api.main:app", "--host", "0.0.0.0", "--port", "8000"])

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep
@@ -14,6 +14,7 @@ router = APIRouter(prefix="/disputes", tags=["disputes"])
 @router.post("/open", response_model=DisputeOut)
 @limiter.limit("30/minute")
 def open_dispute(
+	request: Request,
 	req: DisputeOpenRequest,
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
@@ -29,6 +30,7 @@ def open_dispute(
 @router.post("/resolve", response_model=DisputeOut)
 @limiter.limit("30/minute")
 def resolve_dispute(
+	request: Request,
 	req: DisputeResolveRequest,
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),

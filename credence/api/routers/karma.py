@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep, get_settings
@@ -14,6 +14,7 @@ router = APIRouter(prefix="/karma", tags=["karma"])
 @router.post("/award", response_model=LedgerEntryOut)
 @limiter.limit("120/minute")
 def award(
+	request: Request,
 	req: AwardRequest,
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
@@ -51,6 +52,7 @@ def award(
 @router.post("/reverse", response_model=LedgerEntryOut)
 @limiter.limit("60/minute")
 def reverse(
+	request: Request,
 	req: ReverseRequest,
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
@@ -74,6 +76,7 @@ def reverse(
 @router.post("/flag", response_model=FlagEvidenceResponse)
 @limiter.limit("60/minute")
 def flag(
+	request: Request,
 	req: FlagEvidenceRequest,
 	session: Session = Depends(get_session_dep),
 ):
