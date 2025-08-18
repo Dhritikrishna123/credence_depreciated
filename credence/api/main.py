@@ -9,6 +9,7 @@ from fastapi.responses import PlainTextResponse
 
 from ..config import Settings
 from ..db import create_session_factory, get_session
+from ..schemas import AwardRequest, ReverseRequest, FlagEvidenceRequest
 from .routers import karma as karma_router
 from .routers import trust as trust_router
 from .routers import leaderboard as leaderboard_router
@@ -26,6 +27,14 @@ def get_settings() -> Settings:
 def make_app() -> FastAPI:
 	settings = get_settings()
 	app = FastAPI(title="Credence API", openapi_url="/v1/openapi.json")
+
+	# Ensure pydantic models are fully built for OpenAPI generation
+	try:
+		AwardRequest.model_rebuild()
+		ReverseRequest.model_rebuild()
+		FlagEvidenceRequest.model_rebuild()
+	except Exception:
+		pass
 
 	# Prepare DB
 	session_factory = create_session_factory(settings)
