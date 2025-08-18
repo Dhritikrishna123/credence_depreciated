@@ -41,6 +41,7 @@ class Settings(BaseSettings):
 	app_name: str = "credence"
 	database_url: str = Field(default_factory=lambda: "postgresql+psycopg://credence:credence@localhost:5432/credence")
 	config_path: Optional[str] = None
+	redis_url: str = Field(default_factory=lambda: "redis://localhost:6379/0")
 	plugins: PluginConfig = Field(default_factory=PluginConfig)
 	# domain -> action -> config
 	domains: Dict[str, Dict[str, DomainActionConfig]] = Field(default_factory=dict)
