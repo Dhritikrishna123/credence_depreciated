@@ -4,6 +4,10 @@ from fastapi import Depends, FastAPI
 
 from ..config import Settings
 from ..db import create_session_factory, get_session
+from .routers import karma as karma_router
+from .routers import trust as trust_router
+from .routers import leaderboard as leaderboard_router
+from .routers import verification as verification_router
 
 
 def get_settings() -> Settings:
@@ -26,10 +30,11 @@ def make_app() -> FastAPI:
 		return {"version": "0.1.0"}
 
 	# Example dependency usage
-	@app.get("/balance/{user_id}")
-	def balance(user_id: str, settings: Settings = Depends(get_settings)) -> dict[str, str | int]:
-		# Placeholder endpoint for now; real logic will be added in services/routers
-		return {"user_id": user_id, "database": settings.database_url}
+	# Routers
+	app.include_router(karma_router.router)
+	app.include_router(trust_router.router)
+	app.include_router(leaderboard_router.router)
+	app.include_router(verification_router.router)
 
 	return app
 
