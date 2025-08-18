@@ -19,6 +19,12 @@ class KarmaService:
 	session: Session
 	settings: Settings
 
+	"""Business logic for awarding, reversing, and flagging karma ledger entries.
+
+	Ensures daily limits, idempotency, evidence validation, cache invalidation,
+	and triggers asynchronous trust recomputation.
+	"""
+
 	def _get_action_config(self, domain: str, action: str) -> DomainActionConfig:
 		try:
 			return self.settings.domains[domain][action]
@@ -26,6 +32,11 @@ class KarmaService:
 			raise ValueError(f"Unknown domain/action: {domain}/{action}")
 
 	def award(self, user_id: str, domain: str, action: str, evidence_ref: Optional[str], idempotency_key: Optional[str] = None, meta: Optional[Dict[str, Any]] = None) -> LedgerEntry:
+		"""Create a new positive or negative ledger entry for a user.
+
+		Validates action config, evidence, and daily rate limits. Supports an
+		optional idempotency key to safely retry the same request.
+		"""
 		cfg = self._get_action_config(domain, action)
 		if cfg.requires_evidence and not evidence_ref:
 			raise ValueError("Evidence is required for this action")
@@ -99,6 +110,7 @@ class KarmaService:
 		return entry
 
 	def reverse(self, user_id: str, original_entry_id: int) -> LedgerEntry:
+		"""Append a reversing entry for the caller's own ledger entry."""
 		orig = self.session.get(LedgerEntry, original_entry_id)
 		if orig is None:
 			raise ValueError("Original entry not found")
@@ -120,6 +132,7 @@ class KarmaService:
 		return reversal
 
 	def flag_evidence(self, entry_id: int, status: str) -> EvidenceFlag:
+		"""Record an append-only evidence flag event for an entry."""
 		if status not in {EvidenceStatusEnum.YELLOW, EvidenceStatusEnum.RED}:
 			raise ValueError("Invalid flag status")
 		entry = self.session.get(LedgerEntry, entry_id)

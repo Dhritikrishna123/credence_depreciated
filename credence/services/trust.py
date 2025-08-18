@@ -16,6 +16,8 @@ class TrustService:
 	session: Session
 	settings: Settings
 
+	"""Compute trust using pluggable formulas and verification providers."""
+
 	def get_verification_level(self, user_id: str) -> int:
 		# Compute external vs internal maxima then combine via provider
 		external_level = int(
@@ -33,6 +35,7 @@ class TrustService:
 		return int(provider.effective_level(external_level, internal_level))
 
 	def compute_trust(self, user_id: str, domain: Optional[str] = None) -> tuple[float, int, int]:
+		"""Return (trust, karma_balance, verification_level) for the user."""
 		# balance
 		q = self.session.query(func.coalesce(func.sum(LedgerEntry.points), 0)).filter(
 			LedgerEntry.user_id == user_id

@@ -28,6 +28,7 @@ celery_app = make_celery()
 
 @celery_app.task(name="credence.tasks.recompute_trust")
 def recompute_trust_task(user_id: str, domain: str | None = None) -> str:
+	"""Compute trust, persist a snapshot, and cache the current value."""
 	settings = Settings.from_env_and_file()
 	# Build a session factory locally to avoid global coupling
 	from .db import create_session_factory
@@ -81,7 +82,7 @@ def recompute_trust_task(user_id: str, domain: str | None = None) -> str:
 
 @celery_app.task(name="credence.tasks.apply_decay")
 def apply_decay_task() -> str:
-	"""Periodically apply decay policies and persist new ledger entries representing decay."""
+	"""Apply decay policies and write compensating ledger entries for old items."""
 	settings = Settings.from_env_and_file()
 	from .db import create_session_factory
 	session_factory: sessionmaker[Session] = create_session_factory(settings)

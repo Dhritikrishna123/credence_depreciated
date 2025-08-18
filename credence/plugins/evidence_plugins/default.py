@@ -7,7 +7,13 @@ from typing import Optional
 @dataclass
 class DefaultEvidenceValidator:
 	def validate(self, evidence_ref: str | None) -> str:
-		# Simple heuristic: missing -> yellow if required; explicit "flag:" prefix -> red, "warn:" -> yellow
+		"""Simple heuristic evidence validator.
+
+		- Empty: yellow
+		- Prefix "flag:": red
+		- Prefix "warn:": yellow
+		- Else: green
+		"""
 		if evidence_ref is None or evidence_ref.strip() == "":
 			return "yellow"
 		lower = evidence_ref.lower()
