@@ -17,8 +17,9 @@ Features
 Quick start
 
 1. Create and activate a Python 3.11 environment.
-2. Install: `pip install -e .` (development) or `pip install .`.
-3. Run the API: `uvicorn credence.api.main:app --reload`.
+2. Start PostgreSQL: `docker-compose up -d postgres`.
+3. Install: `pip install -e .` (development) or `pip install .`.
+4. Run the API: `uvicorn credence.api.main:app --reload`.
 
 Configuration
 
@@ -35,5 +36,6 @@ Notes
 
 - Default auth provider is NoAuth: use `X-User-Id` header to emulate a user.
 - Database defaults to SQLite at `./credence.db`. Configure via `DATABASE_URL` env or YAML.
+  - Recommended: PostgreSQL via `postgresql+psycopg://credence:credence@localhost:5432/credence`.
 
 
