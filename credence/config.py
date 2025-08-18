@@ -63,6 +63,7 @@ class Settings(BaseSettings):
 		if path:
 			file_settings = _load_yaml(path)
 			if file_settings:
+				_validate_config_schema(file_settings)
 				return cls(**file_settings)
 		return base
 
@@ -83,5 +84,35 @@ def _load_yaml(path_str: str) -> Optional[Mapping[str, Any]]:
 	if not isinstance(data, dict):
 		return None
 	return data
+
+
+def _validate_config_schema(data: Mapping[str, Any]) -> None:
+	"""Basic JSONSchema-like validation for known fields.
+
+	Intentionally minimal to avoid a hard dependency; ensures types for top-level
+	keys we rely on. Extend as config evolves.
+	"""
+	if not isinstance(data, Mapping):
+		raise ValueError("config must be a mapping")
+	plugins = data.get("plugins")
+	if plugins is not None and not isinstance(plugins, Mapping):
+		raise ValueError("plugins must be a mapping")
+	domains = data.get("domains")
+	if domains is not None and not isinstance(domains, Mapping):
+		raise ValueError("domains must be a mapping")
+	# spot-check domain/action shapes
+	if isinstance(domains, Mapping):
+		for domain_name, actions in domains.items():
+			if not isinstance(actions, Mapping):
+				raise ValueError(f"domain '{domain_name}' must map to action configs")
+			for action_name, cfg in actions.items():
+				if not isinstance(cfg, Mapping):
+					raise ValueError(f"action '{domain_name}.{action_name}' must be a mapping")
+				if "points" in cfg and not isinstance(cfg["points"], int):
+					raise ValueError(f"action '{domain_name}.{action_name}.points' must be int")
+				if "max_per_day" in cfg and cfg["max_per_day"] is not None and not isinstance(cfg["max_per_day"], int):
+					raise ValueError(f"action '{domain_name}.{action_name}.max_per_day' must be int or null")
+				if "requires_evidence" in cfg and not isinstance(cfg["requires_evidence"], bool):
+					raise ValueError(f"action '{domain_name}.{action_name}.requires_evidence' must be bool")
 
 

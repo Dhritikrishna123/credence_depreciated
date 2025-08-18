@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from ...deps import get_session_dep
@@ -70,24 +71,33 @@ def export_ledger(
 		q = q.filter(LedgerEntry.domain == domain)
 	rows = q.order_by(LedgerEntry.created_at.desc()).all()
 	if format == "csv":
-		import io
 		import csv
-		buf = io.StringIO()
-		writer = csv.writer(buf)
-		writer.writerow(["id", "user_id", "domain", "action", "points", "evidence_ref", "evidence_status", "related_entry_id", "created_at"])
-		for r in rows:
-			writer.writerow([
-				r.id,
-				r.user_id,
-				r.domain,
-				r.action,
-				r.points,
-				r.evidence_ref or "",
-				r.evidence_status,
-				r.related_entry_id or "",
-				r.created_at.isoformat(),
-			])
-		return {"format": "csv", "data": buf.getvalue()}
+		import io
+
+		def generate() -> io.StringIO:
+			buf = io.StringIO()
+			writer = csv.writer(buf)
+			writer.writerow(["id", "user_id", "domain", "action", "points", "evidence_ref", "evidence_status", "related_entry_id", "created_at"])
+			yield buf.getvalue()
+			buf.seek(0)
+			buf.truncate(0)
+			for r in rows:
+				writer.writerow([
+					r.id,
+					r.user_id,
+					r.domain,
+					r.action,
+					r.points,
+					r.evidence_ref or "",
+					r.evidence_status,
+					r.related_entry_id or "",
+					r.created_at.isoformat(),
+				])
+				yield buf.getvalue()
+				buf.seek(0)
+				buf.truncate(0)
+
+		return StreamingResponse(generate(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=ledger.csv"})
 	# default json
 	return [LedgerEntryOut.model_validate(r).model_dump() for r in rows]
 

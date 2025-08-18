@@ -57,6 +57,8 @@ dependencies = [
     "prometheus-fastapi-instrumentator>=6.1.0",
     "slowapi>=0.1.9",
     "requests>=2.31.0",
+    "opentelemetry-instrumentation-fastapi>=0.47b0; python_version>='3.11'",
+    "opentelemetry-instrumentation-sqlalchemy>=0.47b0; python_version>='3.11'",
 ]
 
 

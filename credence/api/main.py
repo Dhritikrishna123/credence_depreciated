@@ -65,6 +65,19 @@ def make_app() -> FastAPI:
 	# Prepare DB
 	session_factory = create_session_factory(settings)
 
+	# Optional OpenTelemetry tracing
+	try:
+		from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore[import-not-found]
+		from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor  # type: ignore[import-not-found]
+		FastAPIInstrumentor().instrument_app(app)
+		try:
+			from sqlalchemy import create_engine as _create_engine  # noqa: F401
+			SQLAlchemyInstrumentor().instrument()
+		except Exception:
+			pass
+	except Exception:
+		pass
+
 	@app.get("/healthz")
 	def healthz() -> dict[str, str]:
 		return {"status": "ok"}
