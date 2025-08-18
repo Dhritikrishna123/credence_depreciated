@@ -8,7 +8,7 @@ from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from ...deps import get_session_dep, get_settings
-from ...db import LedgerEntry
+from ...db import LedgerEntry, TrustScore
 from ...plugins import load_symbol
 from ...schemas import LeaderboardItem, LeaderboardResponse
 
@@ -19,6 +19,7 @@ router = APIRouter(prefix="/leaderboard", tags=["leaderboard"])
 def leaderboard(
 	domain: str | None = None,
 	since_days: int | None = None,
+	mode: str | None = None,
 	session: Session = Depends(get_session_dep),
 ):
 	settings = get_settings()
@@ -34,7 +35,23 @@ def leaderboard(
 	q = q.group_by(LedgerEntry.user_id)
 
 	rows: List[Tuple[str, int]] = [(user_id, int(total)) for user_id, total in q.all()]
-	items_sorted = strategy.rank(rows)
+
+	if mode == "trust_weighted":
+		trust_by_user = {
+			user_id: float(
+				session.query(func.coalesce(func.max(TrustScore.trust), 0.0))
+				.filter(TrustScore.user_id == user_id)
+				.scalar() or 0.0
+			)
+			for user_id, _ in rows
+		}
+		weighted: List[Tuple[str, int]] = []
+		for user_id, pts in rows:
+			trust = trust_by_user.get(user_id, 0.0)
+			weighted.append((user_id, int(round(pts * (1.0 + trust)))))
+		items_sorted = strategy.rank(weighted)
+	else:
+		items_sorted = strategy.rank(rows)
 
 	return LeaderboardResponse(
 		domain=domain,

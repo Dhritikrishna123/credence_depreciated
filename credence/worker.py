@@ -9,7 +9,7 @@ from .config import Settings
 from .cache import RedisCache, trust_cache_key
 from .db import LedgerEntry, Verification, TrustScore
 from .plugins import load_symbol
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from sqlalchemy.orm import Session, sessionmaker
 
 
@@ -90,9 +90,50 @@ def apply_decay_task() -> str:
 		# Load decay policy plugin
 		policy_cls = load_symbol(settings.plugins.decay_policy)
 		policy = policy_cls()  # type: ignore[call-arg]
-		# For simplicity: no-op placeholder for now
-		# Future: iterate users/domains, compute age_days on entries, write compensating entries
-		return "decay:ok"
+		# Iterate a limited batch of old entries and apply decay once per original
+		from datetime import datetime, timezone
+		import math
+		cutoff_days = 30.0
+		now = datetime.now(timezone.utc)
+		old_entries = (
+			session.query(LedgerEntry)
+			.filter((now - LedgerEntry.created_at).days > int(cutoff_days))
+			.order_by(LedgerEntry.created_at.asc())
+			.limit(200)
+			.all()
+		)
+		applied = 0
+		for orig in old_entries:
+			# check if a decay entry already exists for this original
+			exists = (
+				session.query(LedgerEntry.id)
+				.filter(
+					and_(
+						LedgerEntry.related_entry_id == orig.id,
+						LedgerEntry.action == "decay",
+					)
+				)
+				.first()
+			)
+			if exists:
+				continue
+			age_days = (now - orig.created_at).total_seconds() / 86400.0
+			decayed_points = int(policy.apply(orig.points, age_days))
+			if decayed_points < orig.points:
+				delta = decayed_points - orig.points
+				entry = LedgerEntry(
+					user_id=orig.user_id,
+					domain=orig.domain,
+					action="decay",
+					points=delta,
+					related_entry_id=orig.id,
+					evidence_ref=orig.evidence_ref,
+					evidence_status=orig.evidence_status,
+				)
+				session.add(entry)
+				session.commit()
+				applied += 1
+		return f"decay:applied={applied}"
 	finally:
 		session.close()
 
