@@ -46,6 +46,8 @@ class Settings(BaseSettings):
 	jwks_url: Optional[str] = None
 	jwt_issuer: Optional[str] = None
 	jwt_audience: Optional[str] = None
+	# Rate limiting
+	rate_limit_default: str = Field(default="60/minute")
 	plugins: PluginConfig = Field(default_factory=PluginConfig)
 	# domain -> action -> config
 	domains: Dict[str, Dict[str, DomainActionConfig]] = Field(default_factory=dict)
