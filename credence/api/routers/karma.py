@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep, get_settings
@@ -17,7 +17,7 @@ def award(
 	req: AwardRequest,
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
-    idempotency_key: str | None = None,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
 	try:
 		service = KarmaService(session=session, settings=get_settings())

@@ -91,13 +91,14 @@ def apply_decay_task() -> str:
 		policy_cls = load_symbol(settings.plugins.decay_policy)
 		policy = policy_cls()  # type: ignore[call-arg]
 		# Iterate a limited batch of old entries and apply decay once per original
-		from datetime import datetime, timezone
+		from datetime import datetime, timezone, timedelta
 		import math
 		cutoff_days = 30.0
 		now = datetime.now(timezone.utc)
+		threshold = now - timedelta(days=int(cutoff_days))
 		old_entries = (
 			session.query(LedgerEntry)
-			.filter((now - LedgerEntry.created_at).days > int(cutoff_days))
+			.filter(LedgerEntry.created_at <= threshold)
 			.order_by(LedgerEntry.created_at.asc())
 			.limit(200)
 			.all()

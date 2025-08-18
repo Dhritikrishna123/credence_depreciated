@@ -55,12 +55,23 @@ def export_ledger(
 		q = q.filter(LedgerEntry.domain == domain)
 	rows = q.order_by(LedgerEntry.created_at.desc()).all()
 	if format == "csv":
-		import io, csv
+		import io
+		import csv
 		buf = io.StringIO()
 		writer = csv.writer(buf)
 		writer.writerow(["id", "user_id", "domain", "action", "points", "evidence_ref", "evidence_status", "related_entry_id", "created_at"])
 		for r in rows:
-			writer.writerow([r.id, r.user_id, r.domain, r.action, r.points, r.evidence_ref, r.evidence_status, r.related_entry_id, r.created_at.isoformat()])
+			writer.writerow([
+				r.id,
+				r.user_id,
+				r.domain,
+				r.action,
+				r.points,
+				r.evidence_ref or "",
+				r.evidence_status,
+				r.related_entry_id or "",
+				r.created_at.isoformat(),
+			])
 		return {"format": "csv", "data": buf.getvalue()}
 	# default json
 	return [LedgerEntryOut.model_validate(r).model_dump() for r in rows]

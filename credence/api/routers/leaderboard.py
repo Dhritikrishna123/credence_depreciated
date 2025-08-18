@@ -50,6 +50,18 @@ def leaderboard(
 			trust = trust_by_user.get(user_id, 0.0)
 			weighted.append((user_id, int(round(pts * (1.0 + trust)))))
 		items_sorted = strategy.rank(weighted)
+	elif mode == "recency_weighted":
+		# Weight by last 7d points added to total
+		start_recent = datetime.now(timezone.utc) - timedelta(days=7)
+		q_recent = session.query(LedgerEntry.user_id, func.coalesce(func.sum(LedgerEntry.points), 0))
+		if domain is not None:
+			q_recent = q_recent.filter(LedgerEntry.domain == domain)
+		q_recent = q_recent.filter(LedgerEntry.created_at >= start_recent).group_by(LedgerEntry.user_id)
+		recent_map = {u: int(p) for u, p in q_recent.all()}
+		weighted = []
+		for user_id, pts in rows:
+			weighted.append((user_id, pts + recent_map.get(user_id, 0)))
+		items_sorted = strategy.rank(weighted)
 	else:
 		items_sorted = strategy.rank(rows)
 
