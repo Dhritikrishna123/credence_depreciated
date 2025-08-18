@@ -66,3 +66,29 @@ class LeaderboardResponse(BaseModel):
 	items: list[LeaderboardItem]
 
 
+class DisputeOpenRequest(BaseModel):
+	ledger_entry_id: int
+	reason: str
+
+
+class DisputeResolveRequest(BaseModel):
+	dispute_id: int
+	resolution: str  # resolved | rejected
+	note: Optional[str] = None
+
+
+class DisputeOut(BaseModel):
+	id: int
+	ledger_entry_id: int
+	opened_by: str
+	reason: str
+	status: str
+	resolution_note: Optional[str]
+	resolved_by: Optional[str]
+	resolved_at: Optional[datetime]
+	created_at: datetime
+
+	class Config:
+		from_attributes = True
+
+

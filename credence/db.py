@@ -48,6 +48,28 @@ class Verification(Base):
 	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
+class DisputeStatusEnum(str, PyEnum):
+	OPEN = "open"
+	RESOLVED = "resolved"
+	REJECTED = "rejected"
+
+
+class Dispute(Base):
+	__tablename__ = "disputes"
+
+	id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	ledger_entry_id: Mapped[int] = mapped_column(Integer, ForeignKey("ledger_entries.id"))
+	opened_by: Mapped[str] = mapped_column(String(128))
+	reason: Mapped[str] = mapped_column(String(512))
+	status: Mapped[DisputeStatusEnum] = mapped_column(
+		Enum(DisputeStatusEnum, name="dispute_status"), default=DisputeStatusEnum.OPEN, index=True
+	)
+	resolution_note: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+	resolved_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+	resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+
 class IdempotencyKey(Base):
 	__tablename__ = "idempotency_keys"
 
