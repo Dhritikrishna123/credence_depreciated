@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Header, Request, Body
+from typing import Annotated
 from sqlalchemy.orm import Session
 
 from ...deps import AuthAdapter, get_auth_adapter, get_session_dep, get_settings
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/karma", tags=["karma"])
 @limiter.limit("120/minute")
 def award(
 	request: Request,
-	req: AwardRequest = Body(...),
+	req: Annotated[AwardRequest, Body(...)],
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
@@ -53,7 +54,7 @@ def award(
 @limiter.limit("60/minute")
 def reverse(
 	request: Request,
-	req: ReverseRequest = Body(...),
+	req: Annotated[ReverseRequest, Body(...)],
 	session: Session = Depends(get_session_dep),
 	auth: AuthAdapter = Depends(get_auth_adapter),
 ):
@@ -77,7 +78,7 @@ def reverse(
 @limiter.limit("60/minute")
 def flag(
 	request: Request,
-	req: FlagEvidenceRequest = Body(...),
+	req: Annotated[FlagEvidenceRequest, Body(...)],
 	session: Session = Depends(get_session_dep),
 ):
 	"""Record an append-only evidence flag (yellow/red) for a ledger entry.
