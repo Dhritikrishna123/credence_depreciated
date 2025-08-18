@@ -35,7 +35,7 @@ Development
 Notes
 
 - Default auth provider is NoAuth: use `X-User-Id` header to emulate a user.
-- Database defaults to SQLite at `./credence.db`. Configure via `DATABASE_URL` env or YAML.
-  - Recommended: PostgreSQL via `postgresql+psycopg://credence:credence@localhost:5432/credence`.
+- Database defaults to PostgreSQL DSN `postgresql+psycopg://credence:credence@localhost:5432/credence`.
+  - Override via `DATABASE_URL` env or YAML `database_url`.
 
 
