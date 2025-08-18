@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from ..rate_limit import limiter
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from fastapi.responses import PlainTextResponse
 
 from ..config import Settings
@@ -44,6 +45,7 @@ def make_app() -> FastAPI:
 
 	# Rate limiter
 	app.state.limiter = limiter
+	app.add_middleware(SlowAPIMiddleware)
 
 	@app.exception_handler(RateLimitExceeded)
 	def ratelimit_handler(request, exc):  # type: ignore[no-untyped-def]
