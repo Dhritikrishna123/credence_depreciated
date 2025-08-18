@@ -19,4 +19,29 @@ services:
 volumes:
   pgdata: {}
 
+  redis:
+    image: redis:7-alpine
+    container_name: credence-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build: .
+    container_name: credence-worker
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      CREDENCE_CONFIG: /app/config/config.yaml
+      CREDENCE_DATABASE_URL: postgresql+psycopg://credence:credence@postgres:5432/credence
+      CREDENCE_REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    command: ["celery", "-A", "credence.worker:celery_app", "worker", "--loglevel=info"]
+
 
