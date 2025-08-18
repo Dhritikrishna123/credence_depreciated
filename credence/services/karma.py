@@ -11,6 +11,7 @@ from ..config import DomainActionConfig, Settings
 from ..db import EvidenceStatusEnum, IdempotencyKey, LedgerEntry
 from ..plugins import load_symbol
 from ..cache import RedisCache, balance_cache_key
+from ..worker import recompute_trust_task
 
 
 @dataclass
@@ -91,6 +92,9 @@ class KarmaService:
 			balance_cache_key(user_id, None),
 			balance_cache_key(user_id, domain),
 		)
+
+		# async recompute trust
+		recompute_trust_task.delay(user_id)
 		return entry
 
 	def reverse(self, user_id: str, original_entry_id: int) -> LedgerEntry:
