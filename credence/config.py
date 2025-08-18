@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 	model_config = SettingsConfigDict(env_prefix="CREDENCE_", extra="ignore")
 
 	app_name: str = "credence"
-	database_url: str = Field(default_factory=lambda: "sqlite:///./credence.db")
+	database_url: str = Field(default_factory=lambda: "postgresql+psycopg://credence:credence@localhost:5432/credence")
 	config_path: Optional[str] = None
 	plugins: PluginConfig = Field(default_factory=PluginConfig)
 	# domain -> action -> config
