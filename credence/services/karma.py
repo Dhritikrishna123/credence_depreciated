@@ -11,6 +11,7 @@ from ..config import DomainActionConfig, Settings
 from ..db import EvidenceStatusEnum, IdempotencyKey, LedgerEntry, EvidenceFlag
 from ..plugins import load_symbol
 from ..cache import RedisCache, balance_cache_key
+from . import WebhookClient
 from ..worker import recompute_trust_task
 
 
@@ -107,6 +108,20 @@ class KarmaService:
 
 		# async recompute trust
 		recompute_trust_task.delay(user_id)
+
+		# webhook
+		WebhookClient(settings=self.settings).send_event(
+			"ledger.entry.created",
+			{
+				"id": entry.id,
+				"user_id": entry.user_id,
+				"domain": entry.domain,
+				"action": entry.action,
+				"points": entry.points,
+				"evidence_ref": entry.evidence_ref,
+				"created_at": entry.created_at.isoformat(),
+			},
+		)
 		return entry
 
 	def reverse(self, user_id: str, original_entry_id: int) -> LedgerEntry:
@@ -129,6 +144,19 @@ class KarmaService:
 		self.session.add(reversal)
 		self.session.commit()
 		self.session.refresh(reversal)
+
+		WebhookClient(settings=self.settings).send_event(
+			"ledger.entry.reversed",
+			{
+				"id": reversal.id,
+				"user_id": reversal.user_id,
+				"domain": reversal.domain,
+				"action": reversal.action,
+				"points": reversal.points,
+				"related_entry_id": reversal.related_entry_id,
+				"created_at": reversal.created_at.isoformat(),
+			},
+		)
 		return reversal
 
 	def flag_evidence(self, entry_id: int, status: str) -> EvidenceFlag:
@@ -143,6 +171,15 @@ class KarmaService:
 		self.session.add(flag)
 		self.session.commit()
 		self.session.refresh(flag)
+		WebhookClient(settings=self.settings).send_event(
+			"ledger.evidence.flagged",
+			{
+				"id": flag.id,
+				"ledger_entry_id": flag.ledger_entry_id,
+				"status": flag.status,
+				"created_at": flag.created_at.isoformat(),
+			},
+		)
 		return flag
 
 

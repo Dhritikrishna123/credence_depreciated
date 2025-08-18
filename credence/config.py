@@ -42,6 +42,10 @@ class Settings(BaseSettings):
 	database_url: str = Field(default_factory=lambda: "postgresql+psycopg://credence:credence@localhost:5432/credence")
 	config_path: Optional[str] = None
 	redis_url: str = Field(default_factory=lambda: "redis://localhost:6379/0")
+	# Webhooks
+	webhook_url: Optional[str] = None
+	webhook_secret: Optional[str] = None
+	webhook_timeout_seconds: int = Field(default=5)
 	# JWT config (for JwtAuthProvider)
 	jwks_url: Optional[str] = None
 	jwt_issuer: Optional[str] = None
