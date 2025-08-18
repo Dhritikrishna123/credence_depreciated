@@ -9,7 +9,22 @@ from fastapi.responses import PlainTextResponse
 
 from ..config import Settings
 from ..db import create_session_factory, get_session
-from ..schemas import AwardRequest, ReverseRequest, FlagEvidenceRequest
+from ..schemas import (
+    AwardRequest,
+    ReverseRequest,
+    FlagEvidenceRequest,
+    LedgerEntryOut,
+    BalanceResponse,
+    FlagEvidenceResponse,
+    VerificationSetRequest,
+    TrustResponse,
+    LeaderboardItem,
+    LeaderboardResponse,
+    LedgerPageResponse,
+    DisputeOpenRequest,
+    DisputeResolveRequest,
+    DisputeOut,
+)
 from .routers import karma as karma_router
 from .routers import trust as trust_router
 from .routers import leaderboard as leaderboard_router
@@ -33,6 +48,17 @@ def make_app() -> FastAPI:
 		AwardRequest.model_rebuild()
 		ReverseRequest.model_rebuild()
 		FlagEvidenceRequest.model_rebuild()
+		LedgerEntryOut.model_rebuild()
+		BalanceResponse.model_rebuild()
+		FlagEvidenceResponse.model_rebuild()
+		VerificationSetRequest.model_rebuild()
+		TrustResponse.model_rebuild()
+		LeaderboardItem.model_rebuild()
+		LeaderboardResponse.model_rebuild()
+		LedgerPageResponse.model_rebuild()
+		DisputeOpenRequest.model_rebuild()
+		DisputeResolveRequest.model_rebuild()
+		DisputeOut.model_rebuild()
 	except Exception:
 		pass
 

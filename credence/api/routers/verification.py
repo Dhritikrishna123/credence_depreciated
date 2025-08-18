@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 
 from ...deps import get_session_dep
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/verification", tags=["verification"])
 
 
 @router.post("/set")
-def set_verification(req: VerificationSetRequest, session: Session = Depends(get_session_dep)):
+def set_verification(req: VerificationSetRequest = Body(...), session: Session = Depends(get_session_dep)):
 	try:
 		service = VerificationService(session=session)
 		v = service.set_level(user_id=req.user_id, source=req.source, level=req.level)

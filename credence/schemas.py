@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class AwardRequest(BaseModel):
@@ -25,8 +25,7 @@ class LedgerEntryOut(BaseModel):
 	meta: Optional[Dict[str, Any]]
 	created_at: datetime
 
-	class Config:
-		from_attributes = True
+	model_config = ConfigDict(from_attributes=True)
 
 
 class BalanceResponse(BaseModel):
@@ -41,7 +40,7 @@ class ReverseRequest(BaseModel):
 
 class FlagEvidenceRequest(BaseModel):
 	entry_id: int
-	status: str = Field(..., pattern="^(yellow|red)$")
+	status: Literal["yellow", "red"]
 
 
 class FlagEvidenceResponse(BaseModel):
@@ -106,7 +105,6 @@ class DisputeOut(BaseModel):
 	resolved_at: Optional[datetime]
 	created_at: datetime
 
-	class Config:
-		from_attributes = True
+	model_config = ConfigDict(from_attributes=True)
 
 
