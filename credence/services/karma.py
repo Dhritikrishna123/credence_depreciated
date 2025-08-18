@@ -8,8 +8,9 @@ from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from ..config import DomainActionConfig, Settings
-from ..db import EvidenceStatusEnum, LedgerEntry
+from ..db import EvidenceStatusEnum, IdempotencyKey, LedgerEntry
 from ..plugins import load_symbol
+from ..cache import RedisCache, balance_cache_key
 
 
 @dataclass
@@ -23,7 +24,7 @@ class KarmaService:
 		except KeyError:
 			raise ValueError(f"Unknown domain/action: {domain}/{action}")
 
-	def award(self, user_id: str, domain: str, action: str, evidence_ref: Optional[str]) -> LedgerEntry:
+	def award(self, user_id: str, domain: str, action: str, evidence_ref: Optional[str], idempotency_key: Optional[str] = None) -> LedgerEntry:
 		cfg = self._get_action_config(domain, action)
 		if cfg.requires_evidence and not evidence_ref:
 			raise ValueError("Evidence is required for this action")
@@ -48,6 +49,18 @@ class KarmaService:
 			if int(count_q.scalar_one()) >= cfg.max_per_day:
 				raise ValueError("Daily limit reached for this action")
 
+		# idempotency
+		if idempotency_key:
+			existing = (
+				self.session.query(IdempotencyKey)
+				.filter(IdempotencyKey.key == idempotency_key)
+				.one_or_none()
+			)
+			if existing and existing.ledger_entry_id:
+				entry_existing = self.session.get(LedgerEntry, existing.ledger_entry_id)
+				if entry_existing:
+					return entry_existing
+
 		entry = LedgerEntry(
 			user_id=user_id,
 			domain=domain,
@@ -59,6 +72,25 @@ class KarmaService:
 		self.session.add(entry)
 		self.session.commit()
 		self.session.refresh(entry)
+
+		# upsert idempotency key -> ledger id
+		if idempotency_key:
+			idem = IdempotencyKey(
+				key=idempotency_key,
+				user_id=user_id,
+				domain=domain,
+				action=action,
+				ledger_entry_id=entry.id,
+			)
+			self.session.add(idem)
+			self.session.commit()
+
+		# invalidate cached balances
+		cache = RedisCache.from_settings(self.settings)
+		cache.delete(
+			balance_cache_key(user_id, None),
+			balance_cache_key(user_id, domain),
+		)
 		return entry
 
 	def reverse(self, user_id: str, original_entry_id: int) -> LedgerEntry:
