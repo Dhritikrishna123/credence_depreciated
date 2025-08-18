@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import Depends, FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from ..config import Settings
 from ..db import create_session_factory, get_session
@@ -17,7 +18,7 @@ def get_settings() -> Settings:
 
 def make_app() -> FastAPI:
 	settings = get_settings()
-	app = FastAPI(title="Credence API")
+	app = FastAPI(title="Credence API", openapi_url="/v1/openapi.json")
 
 	# Prepare DB
 	session_factory = create_session_factory(settings)
@@ -32,11 +33,15 @@ def make_app() -> FastAPI:
 
 	# Example dependency usage
 	# Routers
-	app.include_router(karma_router.router)
-	app.include_router(trust_router.router)
-	app.include_router(leaderboard_router.router)
-	app.include_router(verification_router.router)
-	app.include_router(balances_router.router)
+	# Instrument metrics
+	Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+	# Versioned API
+	app.include_router(karma_router.router, prefix="/v1")
+	app.include_router(trust_router.router, prefix="/v1")
+	app.include_router(leaderboard_router.router, prefix="/v1")
+	app.include_router(verification_router.router, prefix="/v1")
+	app.include_router(balances_router.router, prefix="/v1")
 
 	return app
 
