@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from fastapi import Depends, FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import PlainTextResponse
 
 from ..config import Settings
 from ..db import create_session_factory, get_session
@@ -36,6 +40,14 @@ def make_app() -> FastAPI:
 	# Routers
 	# Instrument metrics
 	Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+	# Rate limiter
+	limiter = Limiter(key_func=get_remote_address, default_limits=[Settings().rate_limit_default])
+	app.state.limiter = limiter
+
+	@app.exception_handler(RateLimitExceeded)
+	def ratelimit_handler(request, exc):  # type: ignore[no-untyped-def]
+		return PlainTextResponse("Too Many Requests", status_code=429)
 
 	# Versioned API
 	app.include_router(karma_router.router, prefix="/v1")
