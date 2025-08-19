@@ -71,7 +71,9 @@ class Settings(BaseSettings):
 						overrides["domains"] = file_settings["domains"]
 					if "plugins" in file_settings:
 						overrides["plugins"] = file_settings["plugins"]
-				return cls(**overrides)
+				# Start from env-populated base and overlay file-driven sections
+				merged = {**base.model_dump(), **overrides}
+				return cls(**merged)
 		return base
 
 
